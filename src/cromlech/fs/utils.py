@@ -39,8 +39,6 @@ def create_directory(path, chroot=None):
         rooted = os.path.realpath(chroot)
         if not os.path.isdir(rooted):
             raise ChRootError('%r is not a valid directory.' % chroot)
-        if not can_use_chroot(rooted):
-            raise ChRootError('%r has the wrong permissions.' % chroot)
         if not realpath.startswith(rooted):
             raise ChRootError('%r is not contained in the root %r.' % 
                               (path, chroot))
