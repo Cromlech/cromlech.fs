@@ -53,8 +53,9 @@ class Folder(object):
         else:
             return None
 
-    def __init__(self, path):
-        create_directory(path)
+    def __init__(self, path, mkdir=True):
+        if mkdir:
+            create_directory(path)
         self.path = path
 
     def __contains__(self, name):
