@@ -2,6 +2,7 @@
 
 import os
 import stat
+import shutil
 from mimetypes import guess_type
 from .utils import create_directory
 
@@ -36,7 +37,7 @@ class File(object):
         self.mime = mime or guess_type(name)
 
     def __iter__(self):
-        return iter(self.iterator(open(path, 'rb')))
+        return iter(self.iterator(open(self.path, 'rb')))
 
 
 class Folder(object):
@@ -61,18 +62,44 @@ class Folder(object):
     def __contains__(self, name):
         name = os.path.basename(name)
         path = os.path.join(self.path, name)
-        assert os.path.isfile(path)
+        return os.path.isfile(path)
 
     def __getitem__(self, name):
         name = os.path.basename(name)
         path = os.path.join(self.path, name)
-        assert os.path.isfile(path)
-        size = os.path.getsize(path)
-        return self.model(path, name, size)
+        if os.path.exists(path):
+            if not os.path.isfile(path):
+                raise TypeError('Requested resource is not a file')
+            size = os.path.getsize(path)
+            return self.model(path, name, size)
+        raise KeyError(name)
 
     def __iter__(self):
         for k in self.keys():
             yield self.__getitem__(k)
 
     def keys(self):
-        return os.listdir(self.path)
+        return sorted(os.listdir(self.path))
+
+    def move(self, src, dst):
+        dst = os.path.basename(dst)
+        if dst not in self:
+            if src in self:
+                target = os.path.join(self.path, dst)
+                source = os.path.join(self.path, src)
+                shutil.move(source, target)
+                return dst, target
+            else:
+                raise KeyError("%r doesn't exists in %r" % (dst, self.path))
+        else:
+            raise KeyError('%r already exists in %r' % (dst, self.path))
+
+    def persist(self, data, filename):
+        """data must be a file descriptor-like object.
+        """
+        data.seek(0)
+        name = os.path.basename(filename)
+        with open(os.path.join(self.path, name), 'w') as fdst:
+            shutil.copyfileobj(data, fdst)
+        data.seek(0)
+        return self[name]
