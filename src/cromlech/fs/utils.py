@@ -19,14 +19,14 @@ def access_permissions(path, *perms):
 def assert_directory_access(path, mkdir=False):
     if not os.path.exists(path):
         if mkdir is True:
-            os.makedirs(path, 0755)
+            os.makedirs(path, 0o755)
             return True
         else:
             raise FSError('Folder %r does not exist.' % path)
     if not os.path.isdir(path):
         raise FSError('%r exists and is not a folder' % path)
     else:
-        assert access_permissions(realpath, *RXW)
+        assert access_permissions(path, *RXW)
     return True
 
 
